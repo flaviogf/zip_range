@@ -1,20 +1,12 @@
-* Get states
-* Find cities by each state
-* Browse for all pages of cities
+#### STATE
 
-````javascript
-// State
-{
-    name: 'SP',
-    beginZipCode: '01000000',
-    endZipCode: '19999999',
-}
+| id | name | beginZipCode | endZipCode
+|----|------|--------------|-----------
+| 1  | AC   | 69900-000    | 69999-999
 
-// City
-{
-    name: 'Franca',
-    state: 'SP',
-    beginZipCode: '14400001',
-    endZipCode: '14414999',
-}
-````
+
+#### CITY
+
+| name       | stateId | stateName | beginZipCode | endZipCode
+|------------|---------|-----------|--------------|-----------
+| Adamantina | 26      | SP        | 17800000     | 17809999
