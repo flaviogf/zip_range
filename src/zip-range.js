@@ -44,7 +44,7 @@ export function createCSVFileOutputGateway(directory) {
       .map((it) => `${it.name},${it.stateId},${it.stateName},${it.beginZipCode},${it.endZipCode}\n`)
       .join('')
 
-    return promisify(fs.writeFile)(path.join(directory, `${state.name}.csv`), `${header}${data}`)
+    return promisify(fs.writeFile)(path.join(directory, `${state.name.toLowerCase()}.csv`), `${header}${data}`)
   }
 
   return {
