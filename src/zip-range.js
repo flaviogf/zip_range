@@ -22,7 +22,9 @@ export default function zipRange(outputGateway) {
 
 export function createCSVFileOutputGateway(directory) {
   function execute(states) {
-    return createOutputFolder().then(() => Promise.all([saveStates(states), ...states.map(saveCities)]))
+    return createOutputFolder().then(() =>
+      Promise.all([saveStates(states), saveCities(states), saveCitiesSeparately(states)]),
+    )
   }
 
   function createOutputFolder() {
@@ -37,14 +39,30 @@ export function createCSVFileOutputGateway(directory) {
     return promisify(fs.writeFile)(path.join(directory, 'states.csv'), `${header}${data}`)
   }
 
-  function saveCities(state) {
-    const header = 'name,stateId,stateName,beginZipCode,endZipCode\n'
+  function saveCities(states) {
+    const cities = states.map((it) => it.cities).reduce((acc, it) => [...acc, ...it], [])
 
-    const data = state.cities
-      .map((it) => `${it.name},${it.stateId},${it.stateName},${it.beginZipCode},${it.endZipCode}\n`)
+    const header = 'id,name,stateId,stateName,beginZipCode,endZipCode\n'
+
+    const data = cities
+      .map((it, index) => `${index + 1},${it.name},${it.stateId},${it.stateName},${it.beginZipCode},${it.endZipCode}\n`)
       .join('')
 
-    return promisify(fs.writeFile)(path.join(directory, `${state.name.toLowerCase()}.csv`), `${header}${data}`)
+    return promisify(fs.writeFile)(path.join(directory, 'cities.csv'), `${header}${data}`)
+  }
+
+  function saveCitiesSeparately(states) {
+    const tasks = states.map((state) => {
+      const header = 'name,stateId,stateName,beginZipCode,endZipCode\n'
+
+      const data = state.cities
+        .map((it) => `${it.name},${it.stateId},${it.stateName},${it.beginZipCode},${it.endZipCode}\n`)
+        .join('')
+
+      return promisify(fs.writeFile)(path.join(directory, `${state.name.toLowerCase()}.csv`), `${header}${data}`)
+    })
+
+    return Promise.all(tasks)
   }
 
   return {
@@ -53,10 +71,12 @@ export function createCSVFileOutputGateway(directory) {
 }
 
 function createClient() {
-  return axios.create({
+  const client = axios.create({
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     responseType: 'arraybuffer',
   })
+
+  return client
 }
 
 function createCorreios(client) {
@@ -90,7 +110,9 @@ function createCorreios(client) {
   }
 
   function fetchZipCodeRangeOfTheStates(states) {
-    return Promise.all(states.map(fetchZipCodeRangeOfTheState))
+    const tasks = states.map(fetchZipCodeRangeOfTheState)
+
+    return Promise.all(tasks)
   }
 
   function fetchZipCodeRangeOfTheState(state) {
@@ -130,7 +152,9 @@ function createCorreios(client) {
   }
 
   function fetchCities(states) {
-    return Promise.all(states.map((it) => browseAllCityPages(it).then((cities) => ({ ...it, cities }))))
+    const tasks = states.map((it) => browseAllCityPages(it).then((cities) => ({ ...it, cities })))
+
+    return Promise.all(tasks)
   }
 
   function browseAllCityPages(state, cities = [], next = { begin: 1, end: 50 }) {
